@@ -19,10 +19,11 @@ Claude Code などの AI コーディングツールを使った開発で、セ�
 
 | コマンド | すること |
 |---|---|
+| `/security-kit:init` | プロジェクトに、キットの設定（.env などの読み取り禁止、キットの有効化、公式プラグインを止める指定）と、CLAUDE.md・AGENTS.md への追記を置く。書き込む前に予定と差分を見せて確認する |
 | `/security-kit:consult [ファイル・ルール ID]` | 「これ大丈夫？」の相談。ファイルは書き換えずに、自社のルールに沿って答える。対象を書かなければ、今の変更を見る |
 | `/security-kit:report [説明]` | 誤った指摘、ルールの提案、使いにくさを、このリポジトリの Issue として登録する。登録の前に下書きを見せて確認する |
 
-Anthropic 公式の security-guidance プラグイン（Apache-2.0）と同じ役割を、このキットだけで受け持ちます。公式プラグインの考え方を参考にしており、コードは流用していません。両方を入れると注意が重なるので、このキットを使うときは公式プラグインを止めてください。
+Anthropic 公式の security-guidance プラグイン（Apache-2.0）と同じ役割を、このキットだけで受け持ちます。公式プラグインの考え方を参考にしており、コードは流用していません。両方を入れると注意が重なるので、このキットを使うプロジェクトでは公式プラグインを止めます。`/security-kit:init` が、そのプロジェクトの設定にだけ止める指定を入れます（ほかのプロジェクトでは公式プラグインがそのまま動きます）。
 
 ## 文書
 
@@ -46,12 +47,13 @@ security-kit/
 │   └── security-kit/        プラグイン本体
 │       ├── hooks/           フックの登録
 │       ├── scripts/         フックとコマンドのスクリプト（Python の標準ライブラリだけ）
-│       ├── skills/          先輩役の振る舞い（senpai）、相談（consult）、報告（report）
+│       ├── skills/          先輩役の振る舞い（senpai）、初期化（init）、相談（consult）、報告（report）
+│       ├── templates/       各プロジェクトに置くひな形（build.py が生成。初期化コマンドが使う）
 │       └── data/rules.json  ルールデータ（build.py が生成）
 ├── rules/                   ルールの元データ（1ルール1ファイルの YAML。人が編集するのはここだけ）
 ├── build/                   ルールデータなどを生成するスクリプト
 ├── tests/                   テスト
-└── docs/                    文書
+└── docs/                    文書（rules.csv はルールの一覧表。build.py が生成）
 ```
 
 ## 試作を動かす
@@ -77,7 +79,8 @@ uv run --locked build/build.py          # 検査してから生成する
 uv run --locked build/build.py --check  # 生成物が YAML とずれていないかを確かめる
 ```
 
-- 生成されたファイル（`data/rules.json`、`skills/senpai/rules/`、`tests/rules/examples.json`）は手で編集しません。
+- 生成されたファイル（`data/rules.json`、`skills/senpai/rules/`、`templates/`、`tests/rules/examples.json`、`docs/rules.csv`）は手で編集しません。
+- ルールの一覧は `docs/rules.csv` を Excel などで開くと見られます（見るためだけのもので、編集は YAML で行います）。
 - ルールに書いた違反例と正常例は、そのままテストになります。
 - ルールの書き方は、データ設計書の3章にあります。
 
@@ -95,7 +98,7 @@ claude --plugin-dir /path/to/security-kit/plugins/security-kit
 
 ## プロジェクトごとの設定
 
-プロジェクトの `.claude/security-kit.json` で、動かし方を変えられます。無ければ既定の動きになります。
+プロジェクトの `.claude/security-kit.json` で、動かし方を変えられます。`/security-kit:init` が警告モードで作ります。ファイルが無ければ既定の動き（止める）になります。
 
 ```json
 {
