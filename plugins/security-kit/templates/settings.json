@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(**/*.dcm)"
+    ]
+  },
+  "enabledPlugins": {
+    "security-kit@security-kit": true,
+    "security-guidance@claude-plugins-official": false
+  },
+  "extraKnownMarketplaces": {
+    "security-kit": {
+      "source": {
+        "source": "github",
+        "repo": "monigairu/security-kit"
+      }
+    }
+  }
+}

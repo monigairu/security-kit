@@ -4,7 +4,7 @@ kind: own
 severity: block
 level: 1
 domain: secret
-status: draft
+status: active
 references:
   - 要件定義書 11章 R-002
   - CWE-200 機密情報の露出

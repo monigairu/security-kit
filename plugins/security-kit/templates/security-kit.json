@@ -1,0 +1,13 @@
+{
+  "kit_version": "0.1.0",
+  "mode": "warn",
+  "level": 1,
+  "exclude": [],
+  "exceptions": [],
+  "ai_review": {
+    "stop": true,
+    "commit": true,
+    "model": "sonnet",
+    "max_per_session": 20
+  }
+}
