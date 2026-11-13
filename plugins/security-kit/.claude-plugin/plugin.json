@@ -1,0 +1,6 @@
+{
+  "name": "security-kit",
+  "version": "0.1.0",
+  "description": "AI 開発セキュリティ支援キット。コードを書く前後に検査し、危ない点を一声かける",
+  "author": { "name": "monigairu" }
+}

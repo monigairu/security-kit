@@ -1,0 +1,11 @@
+{
+  "name": "security-kit",
+  "owner": { "name": "monigairu" },
+  "plugins": [
+    {
+      "name": "security-kit",
+      "source": "./plugins/security-kit",
+      "description": "AI 開発セキュリティ支援キット（先輩役の声かけフック）"
+    }
+  ]
+}

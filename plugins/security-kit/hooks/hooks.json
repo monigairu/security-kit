@@ -1,0 +1,73 @@
+{
+  "description": "security-kit の声かけフック（書く前・書いた直後・作業の区切り）と AI レビュー",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" turn-start",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" pre-write",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" post-write",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" commit-review",
+            "if": "Bash(git*commit*)",
+            "asyncRewake": true,
+            "rewakeMessage": "security-kit の AI レビュー（コミットされた変更を背景で確認）から指摘が届きました。下の指摘を確かめて対応するか、当てはまらない理由を伝えてから、利用者の元の依頼に戻ってください。",
+            "rewakeSummary": "security-kit の AI レビューが指摘を見つけました",
+            "timeout": 300
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -I -S \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" stop",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "command": "python3 -I -S \"${CLAUDE_PLUGIN_ROOT}/scripts/hook.py\" ai-review",
+            "asyncRewake": true,
+            "rewakeMessage": "security-kit の AI レビュー（このターンの変更を背景で確認）から指摘が届きました。下の指摘を確かめて対応するか、当てはまらない理由を伝えてください。これは前の応答の代わりではなく、補足です。",
+            "rewakeSummary": "security-kit の AI レビューが指摘を見つけました",
+            "timeout": 180
+          }
+        ]
+      }
+    ]
+  }
+}

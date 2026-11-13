@@ -1,0 +1,427 @@
+{
+  "schema_version": 1,
+  "kit_version": "0.1.0",
+  "rules": {
+    "R-001": {
+      "name": "秘密情報をコードに直接書かない",
+      "severity": "block",
+      "what": "API キーやパスワードなどの秘密情報を、ファイルに直接書こうとしている",
+      "why": "ファイルが共有されたり GitHub に上がったりすると、その鍵で不正に利用される",
+      "fix": "値は環境変数や秘密情報の管理の仕組みから読み込み、ファイルには書かない"
+    },
+    "R-012": {
+      "name": "SQL インジェクション",
+      "severity": "warn",
+      "what": "入力された値をそのまま SQL 文につなげている",
+      "why": "外部から SQL の命令を仕込まれ、データを盗まれたり消されたりする",
+      "fix": "プレースホルダー（? や :name）を使い、値は別に渡す"
+    },
+    "R-013": {
+      "name": "OS コマンドインジェクション",
+      "severity": "warn",
+      "what": "シェルを通してコマンドを実行している",
+      "why": "入力された値がコマンドの一部として解釈され、任意のコマンドを実行される",
+      "fix": "シェルを通さず、コマンドと引数をリストで渡す（shell=True を使わない）"
+    },
+    "R-014": {
+      "name": "安全でないデータの読み込み",
+      "severity": "warn",
+      "what": "読み込むだけでコードが実行されうる形式（pickle、安全でない YAML の読み込み）を使っている",
+      "why": "細工されたデータを読み込むと、任意のコードを実行される",
+      "fix": "JSON など実行を伴わない形式を使う。YAML は安全な読み込み方（safe_load）を使う"
+    },
+    "R-015": {
+      "name": "文字列をコードとして実行している",
+      "severity": "warn",
+      "what": "eval や exec で、文字列をコードとして実行している",
+      "why": "入力された値が含まれると、任意のコードを実行される",
+      "fix": "eval・exec を使わない書き方にする。値の変換だけなら ast.literal_eval を使う"
+    },
+    "R-016": {
+      "name": "通信相手の確認を無効にしている",
+      "severity": "warn",
+      "what": "HTTPS の証明書の検証を無効にしている（verify=False）",
+      "why": "通信を途中で盗み見られたり、書き換えられたりしても気づけない",
+      "fix": "証明書の検証を有効のままにする。社内の証明書を使う場合は、その証明書を指定する"
+    },
+    "R-017": {
+      "name": "弱いハッシュ・暗号の使用",
+      "severity": "advise",
+      "what": "MD5・SHA-1 などの弱いハッシュや、古い暗号の方式を使っている",
+      "why": "パスワードの保存や暗号化に使うと、破られるおそれがある",
+      "fix": "SHA-256 以上や AES-GCM などを使う。パスワードの保存には専用の方式（bcrypt、argon2 など）を使う"
+    },
+    "R-018": {
+      "name": "パスワードらしき値の直書き",
+      "severity": "warn",
+      "what": "パスワードや鍵のような名前の変数に、値を直接書いている",
+      "why": "本物の値だった場合、ファイルが共有されたときに漏れる",
+      "fix": "本物なら環境変数などから読み込む。ダミーの値なら、その行に除外の印（# noqa と理由）を付ける"
+    },
+    "R-020": {
+      "name": "認可の確認",
+      "severity": "advise",
+      "what": "API の入口を書いた。誰がアクセスできるかを確認する必要がある",
+      "why": "確認が漏れると、他人のデータを見られたり書き換えられたりする",
+      "fix": "ログイン済みか、本人のデータかを確認する処理を入れ、他人のデータにアクセスできないことを確かめるテストを書く"
+    },
+    "R-021": {
+      "name": "認可の漏れ",
+      "severity": "warn",
+      "what": "ほかの利用者のデータを読み書きできる処理になっている可能性がある",
+      "why": "ID を変えるだけで、他人のデータを見られたり書き換えられたりする",
+      "fix": "処理の中で、ログイン中の利用者がそのデータの持ち主（または権限のある人）かを確認する。他人のデータにアクセスできないことを確かめるテストを書く"
+    },
+    "R-022": {
+      "name": "パストラバーサル",
+      "severity": "warn",
+      "what": "入力された値を使って、ファイルの場所を組み立てている",
+      "why": "「../」などを使って、想定していない場所のファイルを読まれたり書き換えられたりする",
+      "fix": "実際の場所（リンクをたどった後）を求めてから、許可したフォルダの中にあることを確認する"
+    },
+    "R-023": {
+      "name": "クロスサイトスクリプティング（XSS）",
+      "severity": "warn",
+      "what": "入力された値を、そのまま HTML として画面に出している",
+      "why": "利用者のブラウザで攻撃者のスクリプトが動き、ログイン情報を盗まれたり操作されたりする",
+      "fix": "文字として出力する方法（textContent など）を使う。HTML が必要なら、無害化のライブラリを通す"
+    },
+    "R-024": {
+      "name": "サーバーからの意図しない通信（SSRF）",
+      "severity": "warn",
+      "what": "入力された値を、サーバーからの通信の宛先に使っている",
+      "why": "社内のシステムやクラウドの管理用の窓口に、サーバー経由でアクセスされる",
+      "fix": "宛先を許可リストで確認する。確認には、URL を解釈した後のホスト名を使う"
+    },
+    "R-025": {
+      "name": "オープンリダイレクト",
+      "severity": "warn",
+      "what": "入力された値を、そのままリダイレクト先に使っている",
+      "why": "正規のサイトの URL から、偽のサイトへ誘導される",
+      "fix": "サイト内の場所（/ で始まり、// で始まらない）だけを許可する。フレームワークの安全な機能を使う"
+    },
+    "R-026": {
+      "name": "秘密情報・個人情報の露出",
+      "severity": "warn",
+      "what": "秘密情報や個人情報を、ログ・URL・エラーの応答に出している",
+      "why": "ログや履歴を見られる人に、鍵や個人情報が渡ってしまう",
+      "fix": "ログやエラーには出さない。必要なら一部を伏せる。鍵を URL に入れない"
+    },
+    "R-027": {
+      "name": "認証の不備",
+      "severity": "warn",
+      "what": "ログインや本人確認の処理に、すり抜けられる弱点がある",
+      "why": "他人になりすまされたり、ログインなしで使われたりする",
+      "fix": "フレームワークの認証の仕組みを使う。トークンには安全な乱数を使い、パスワードは専用の方式で保存する"
+    },
+    "R-028": {
+      "name": "GitHub Actions の危ない書き方",
+      "severity": "warn",
+      "what": "ワークフローに、外部から操作できる値の埋め込み、固定していない Action、危ない起動方法のいずれかがある",
+      "why": "issue や PR の題名などからコマンドを仕込まれたり、乗っ取られた Action に秘密情報を盗まれたりする",
+      "fix": "外部から来る値は env を経由して渡す。Action はコミット SHA で固定する。pull_request_target は使わない"
+    },
+    "R-029": {
+      "name": "権限の与えすぎ",
+      "severity": "warn",
+      "what": "目的に対して広すぎる権限を与えている（IAM・RBAC の設定、AI エージェントの権限など）",
+      "why": "乗っ取られたときに、被害が必要以上に広がる",
+      "fix": "必要な操作と対象だけに絞る。AI エージェントに、確認なしで何でも実行できる設定を与えない"
+    },
+    "R-030": {
+      "name": "その他の脆弱性（AI レビュー）",
+      "severity": "warn",
+      "what": "AI レビューが、分類に当てはまらない脆弱性の可能性を指摘した",
+      "why": "内容は下のメモを参照。攻撃に悪用できる可能性がある",
+      "fix": "メモの内容を確かめ、当てはまる場合は修正する"
+    },
+    "R-031": {
+      "name": "外部スクリプトの読み込み",
+      "severity": "advise",
+      "what": "外部のサイトのスクリプトを、内容の確認なしに読み込んでいる",
+      "why": "配布元が乗っ取られると、差し替えられたスクリプトが利用者のブラウザで動く",
+      "fix": "integrity 属性（内容の確認用の値）と crossorigin 属性を付ける"
+    }
+  },
+  "tool_map": {
+    "gitleaks": {
+      "*": "R-001"
+    },
+    "kit-secret": {
+      "*": "R-001"
+    },
+    "ruff": {
+      "S608": "R-012",
+      "S602": "R-013",
+      "S604": "R-013",
+      "S605": "R-013",
+      "S301": "R-014",
+      "S506": "R-014",
+      "S102": "R-015",
+      "S307": "R-015",
+      "S501": "R-016",
+      "S324": "R-017",
+      "S105": "R-018",
+      "S106": "R-018",
+      "S107": "R-018"
+    },
+    "kit": {
+      "K-001": "R-020",
+      "K-002": "R-020",
+      "K-010": "R-013",
+      "K-011": "R-015",
+      "K-012": "R-023",
+      "K-013": "R-016",
+      "K-014": "R-017",
+      "K-015": "R-013",
+      "K-016": "R-014",
+      "K-017": "R-028",
+      "K-018": "R-028",
+      "K-019": "R-028",
+      "K-020": "R-031"
+    }
+  },
+  "review_categories": {
+    "sql-injection": "R-012",
+    "command-injection": "R-013",
+    "unsafe-deserialization": "R-014",
+    "code-injection": "R-015",
+    "tls-disabled": "R-016",
+    "weak-crypto": "R-017",
+    "hardcoded-secret": "R-018",
+    "authorization": "R-021",
+    "path-traversal": "R-022",
+    "xss": "R-023",
+    "ssrf": "R-024",
+    "open-redirect": "R-025",
+    "sensitive-data-exposure": "R-026",
+    "authentication": "R-027",
+    "ci-workflow": "R-028",
+    "excessive-permission": "R-029",
+    "other": "R-030"
+  },
+  "secret_patterns": [
+    {
+      "id": "aws-access-key",
+      "pattern": "\\b(?:AKIA|ASIA|ABIA|ACCA)[A-Z2-7]{16}\\b"
+    },
+    {
+      "id": "github-token",
+      "pattern": "\\bgh[pousr]_[A-Za-z0-9]{36,255}\\b"
+    },
+    {
+      "id": "github-fine-grained-token",
+      "pattern": "\\bgithub_pat_[A-Za-z0-9_]{60,255}\\b"
+    },
+    {
+      "id": "gitlab-token",
+      "pattern": "\\bglpat-[A-Za-z0-9_-]{20,}"
+    },
+    {
+      "id": "slack-token",
+      "pattern": "\\bxox[abeoprs]-[A-Za-z0-9-]{10,}"
+    },
+    {
+      "id": "slack-webhook",
+      "pattern": "https://hooks\\.slack\\.com/services/T[A-Za-z0-9_]+/B[A-Za-z0-9_]+/[A-Za-z0-9_]+"
+    },
+    {
+      "id": "stripe-key",
+      "pattern": "\\b[sr]k_live_[A-Za-z0-9]{20,}"
+    },
+    {
+      "id": "anthropic-api-key",
+      "pattern": "\\bsk-ant-[A-Za-z0-9_-]{20,}"
+    },
+    {
+      "id": "openai-api-key",
+      "pattern": "\\bsk-(?:proj|svcacct|admin)-[A-Za-z0-9_-]{20,}"
+    },
+    {
+      "id": "openai-api-key-legacy",
+      "pattern": "\\bsk-[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}\\b"
+    },
+    {
+      "id": "google-api-key",
+      "pattern": "\\bAIza[0-9A-Za-z_-]{35}\\b"
+    },
+    {
+      "id": "huggingface-token",
+      "pattern": "\\bhf_[A-Za-z0-9]{30,}\\b"
+    },
+    {
+      "id": "npm-token",
+      "pattern": "\\bnpm_[A-Za-z0-9]{36}\\b"
+    },
+    {
+      "id": "pypi-token",
+      "pattern": "\\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}"
+    },
+    {
+      "id": "sendgrid-key",
+      "pattern": "\\bSG\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]{43}\\b"
+    },
+    {
+      "id": "private-key",
+      "pattern": "-----BEGIN [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----"
+    }
+  ],
+  "kit_checks": [
+    {
+      "id": "K-001",
+      "paths": [
+        "*.py"
+      ],
+      "pattern": "^\\s*@\\w+(\\.\\w+)*\\.(get|post|put|patch|delete|route)\\("
+    },
+    {
+      "id": "K-002",
+      "paths": [
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx",
+        "*.mjs",
+        "*.cjs",
+        "*.mts",
+        "*.cts",
+        "*.vue",
+        "*.svelte"
+      ],
+      "pattern": "\\b(?:app|router)\\.(?:get|post|put|patch|delete)\\s*\\(\\s*[\\\"'`]/"
+    },
+    {
+      "id": "K-010",
+      "paths": [
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx",
+        "*.mjs",
+        "*.cjs",
+        "*.mts",
+        "*.cts",
+        "*.vue",
+        "*.svelte"
+      ],
+      "pattern": "\\bchild_process\\.exec(?:Sync)?\\s*\\(|\\bexecSync\\s*\\(|(?<![\\w.$])exec\\s*\\("
+    },
+    {
+      "id": "K-011",
+      "paths": [
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx",
+        "*.mjs",
+        "*.cjs",
+        "*.mts",
+        "*.cts",
+        "*.vue",
+        "*.svelte"
+      ],
+      "pattern": "(?<![\\w.$])eval\\s*\\(|\\bnew\\s+Function\\s*\\("
+    },
+    {
+      "id": "K-012",
+      "paths": [
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx",
+        "*.mjs",
+        "*.cjs",
+        "*.mts",
+        "*.cts",
+        "*.vue",
+        "*.svelte"
+      ],
+      "pattern": "\\.(?:innerHTML|outerHTML)\\s*=(?!=)|\\.insertAdjacentHTML\\s*\\(|\\bdocument\\.write(?:ln)?\\s*\\(|\\bdangerouslySetInnerHTML\\b"
+    },
+    {
+      "id": "K-013",
+      "paths": [
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx",
+        "*.mjs",
+        "*.cjs",
+        "*.mts",
+        "*.cts",
+        "*.vue",
+        "*.svelte",
+        "*.go"
+      ],
+      "pattern": "\\brejectUnauthorized\\s*:\\s*false\\b|NODE_TLS_REJECT_UNAUTHORIZED\\s*=\\s*[\\\"']?0|\\bInsecureSkipVerify\\s*:\\s*true\\b"
+    },
+    {
+      "id": "K-014",
+      "paths": [
+        "*.js",
+        "*.jsx",
+        "*.ts",
+        "*.tsx",
+        "*.mjs",
+        "*.cjs",
+        "*.mts",
+        "*.cts",
+        "*.vue",
+        "*.svelte",
+        "*.py",
+        "*.go"
+      ],
+      "pattern": "\\bcrypto\\.create(?:Cipher|Decipher)\\s*\\(|[\\\"']aes-\\d+-ecb[\\\"']|\\bAES\\.MODE_ECB\\b|\\bmodes\\.ECB\\s*\\("
+    },
+    {
+      "id": "K-015",
+      "paths": [
+        "*.go"
+      ],
+      "pattern": "\\bexec\\.Command\\(\\s*\\\"(?:sh|bash|/bin/sh|/bin/bash)\\\""
+    },
+    {
+      "id": "K-016",
+      "paths": [
+        "*.py"
+      ],
+      "pattern": "\\btorch\\.load\\s*\\((?![^)\\n]*\\bweights_only\\s*=\\s*True)|\\bjoblib\\.load\\s*\\(|\\b(?:pd|pandas)\\.read_pickle\\s*\\(|\\b(?:cloudpickle|dill)\\.loads?\\s*\\("
+    },
+    {
+      "id": "K-017",
+      "paths": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml"
+      ],
+      "pattern": "^(?!\\s*(?:[A-Z][A-Z0-9_]*|if)\\s*:).*\\$\\{\\{[^}]*github\\.(?:head_ref|event\\.(?:client_payload\\b|(?:issue|pull_request|comment|review|review_comment|discussion|head_commit|commits|pages)\\b[\\w.\\[\\]*'\\\"-]*\\.(?:title|body|message|name|email|label|ref|page_name)\\b))"
+    },
+    {
+      "id": "K-018",
+      "paths": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml"
+      ],
+      "pattern": "^\\s*-?\\s*uses:\\s*(?!\\./|docker://)[\\w.-]+/[\\w./-]+@(?![0-9a-f]{40}\\b)\\S+"
+    },
+    {
+      "id": "K-019",
+      "paths": [
+        ".github/workflows/*.yml",
+        ".github/workflows/*.yaml"
+      ],
+      "pattern": "\\bpull_request_target\\b"
+    },
+    {
+      "id": "K-020",
+      "paths": [
+        "*.html",
+        "*.htm",
+        "*.vue",
+        "*.svelte",
+        "*.jsx",
+        "*.tsx"
+      ],
+      "pattern": "<script\\b(?![^>]*\\bintegrity\\s*=)[^>]*\\bsrc\\s*=\\s*[\\\"'](?:https?:)?//"
+    }
+  ]
+}
