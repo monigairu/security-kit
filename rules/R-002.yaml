@@ -1,0 +1,32 @@
+id: R-002
+name: .env・鍵ファイル・認証情報ファイルを AI に読ませない
+kind: own
+severity: block
+level: 1
+domain: secret
+status: draft
+references:
+  - 要件定義書 11章 R-002
+  - CWE-200 機密情報の露出
+message:
+  what: .env や鍵ファイルなど、秘密情報の入ったファイルを読もうとしている
+  why: AI に読まれた秘密情報は、会話の記録や外部への送信を通じて漏れるおそれがある
+  fix: 秘密情報のファイルは読まず、必要な設定の名前だけを利用者に確かめる
+examples:
+  bad: []
+  good: []
+  note: 設定と運用で守るルールのため、すり抜けテスト（NFR-07）で確かめる
+detection:
+  - tool: settings
+    deny:
+      - 'Read(**/.env)'
+      - 'Read(**/.env.*)'
+      - 'Read(**/*.pem)'
+      - 'Read(**/*.key)'
+      - 'Read(~/.ssh/**)'
+      - 'Read(~/.aws/**)'
+  - tool: process
+    note: サンドボックスで読み取りを制限し、コマンドに秘密情報の環境変数を渡さない（FR-21）
+confidence: high
+owner: monigairu
+last_reviewed: 2026-11-14

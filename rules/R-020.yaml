@@ -1,0 +1,51 @@
+id: R-020
+name: 認可の確認
+kind: own
+severity: advise
+level: 1
+domain: api
+status: active
+references:
+  - CWE-862 認可の欠如
+  - OWASP Top 10:2025 A01 アクセス制御の不備
+message:
+  what: API の入口を書いた。誰がアクセスできるかを確認する必要がある
+  why: 確認が漏れると、他人のデータを見られたり書き換えられたりする
+  fix: ログイン済みか、本人のデータかを確認する処理を入れ、他人のデータにアクセスできないことを確かめるテストを書く
+examples:
+  bad:
+    - file: app/api.py
+      code: |
+        @app.get("/users/{user_id}")
+        def get_user(user_id: int):
+            return db.get_user(user_id)
+    - file: web/api.js
+      code: |
+        app.get("/users/:id", async (req, res) => {
+          res.json(await db.getUser(req.params.id));
+        });
+  good:
+    - file: app/settings.py
+      note: API の入口ではない処理には反応しない
+      code: |
+        import functools
+
+        @functools.cache
+        def load_settings():
+            return {}
+    - file: web/app.js
+      code: |
+        app.use(express.json());
+  note: API の入口を書くと、認可の確認を書いた場合も助言が出る。確認があるかどうかまでは見分けない
+detection:
+  - tool: kit
+    id: K-001
+    paths: ['*.py']
+    pattern: '^\s*@\w+(\.\w+)*\.(get|post|put|patch|delete|route)\('
+  - tool: kit
+    id: K-002
+    paths: ['*.js', '*.jsx', '*.ts', '*.tsx', '*.mjs', '*.cjs', '*.mts', '*.cts', '*.vue', '*.svelte']
+    pattern: '\b(?:app|router)\.(?:get|post|put|patch|delete)\s*\(\s*[\"''`]/'
+confidence: low
+owner: monigairu
+last_reviewed: 2026-11-14

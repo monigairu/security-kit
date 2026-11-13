@@ -1,0 +1,39 @@
+id: R-031
+name: 外部スクリプトの読み込み
+kind: own
+severity: advise
+level: 1
+domain: code
+status: active
+references:
+  - CWE-829 信頼できない機能の取り込み
+  - CWE-353 完全性の確認の欠如
+  - OWASP Top 10:2025 A08 ソフトウェアとデータの整合性の不備
+message:
+  what: 外部のサイトのスクリプトを、内容の確認なしに読み込んでいる
+  why: 配布元が乗っ取られると、差し替えられたスクリプトが利用者のブラウザで動く
+  fix: integrity 属性（内容の確認用の値）と crossorigin 属性を付ける
+examples:
+  bad:
+    - file: web/index.html
+      code: |
+        <script src="https://cdn.example.com/chart.min.js"></script>
+  good:
+    - file: web/index.html
+      note: 属性を複数の行に分けて書いた場合
+      code: |
+        <script src="https://cdn.example.com/chart.min.js"
+                integrity="sha384-（配布元が示す値）" crossorigin="anonymous"></script>
+    - file: web/app.html
+      note: 自分のサイトのスクリプト
+      code: |
+        <script src="/static/app.js"></script>
+  note: 簡易チェックは、タグが1行で閉じているときだけ見る。複数の行に分けたタグは、AI レビューと PR 時の検査に任せる
+detection:
+  - tool: kit
+    id: K-020
+    paths: ['*.html', '*.htm', '*.vue', '*.svelte', '*.jsx', '*.tsx']
+    pattern: '<script\b(?![^>]*\bintegrity\s*=)[^>]*\bsrc\s*=\s*[\"''](?:https?:)?//[^>]*>'
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

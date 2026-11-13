@@ -1,0 +1,37 @@
+id: R-018
+name: パスワードらしき値の直書き
+kind: own
+severity: warn
+level: 1
+domain: secret
+status: active
+references:
+  - CWE-259 パスワードの直書き
+  - CWE-798 認証情報の直書き
+message:
+  what: パスワードや鍵のような名前の変数に、値を直接書いている
+  why: 本物の値だった場合、ファイルが共有されたときに漏れる
+  fix: '本物なら環境変数などから読み込む。ダミーの値なら、その行に除外の印（# noqa と理由）を付ける'
+examples:
+  bad:
+    - file: app/settings.py
+      code: |
+        DB_PASSWORD = "s3cr3t-value"
+    - file: app/db.py
+      code: |
+        def connect(lib):
+            return lib.connect(host="db", password="s3cr3t-value")
+  good:
+    - file: app/settings.py
+      code: |
+        import os
+
+        DB_PASSWORD = os.environ["DB_PASSWORD"]
+detection:
+  - tool: ruff
+    ids: ['S105', 'S106', 'S107']
+  - tool: ai-review
+    categories: [hardcoded-secret]
+confidence: low
+owner: monigairu
+last_reviewed: 2026-11-14

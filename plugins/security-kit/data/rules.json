@@ -147,24 +147,6 @@
     "gitleaks": {
       "*": "R-001"
     },
-    "kit-secret": {
-      "*": "R-001"
-    },
-    "ruff": {
-      "S608": "R-012",
-      "S602": "R-013",
-      "S604": "R-013",
-      "S605": "R-013",
-      "S301": "R-014",
-      "S506": "R-014",
-      "S102": "R-015",
-      "S307": "R-015",
-      "S501": "R-016",
-      "S324": "R-017",
-      "S105": "R-018",
-      "S106": "R-018",
-      "S107": "R-018"
-    },
     "kit": {
       "K-001": "R-020",
       "K-002": "R-020",
@@ -179,26 +161,44 @@
       "K-018": "R-028",
       "K-019": "R-028",
       "K-020": "R-031"
+    },
+    "kit-secret": {
+      "*": "R-001"
+    },
+    "ruff": {
+      "S102": "R-015",
+      "S105": "R-018",
+      "S106": "R-018",
+      "S107": "R-018",
+      "S301": "R-014",
+      "S307": "R-015",
+      "S324": "R-017",
+      "S501": "R-016",
+      "S506": "R-014",
+      "S602": "R-013",
+      "S604": "R-013",
+      "S605": "R-013",
+      "S608": "R-012"
     }
   },
   "review_categories": {
-    "sql-injection": "R-012",
-    "command-injection": "R-013",
-    "unsafe-deserialization": "R-014",
-    "code-injection": "R-015",
-    "tls-disabled": "R-016",
-    "weak-crypto": "R-017",
-    "hardcoded-secret": "R-018",
-    "authorization": "R-021",
-    "path-traversal": "R-022",
-    "xss": "R-023",
-    "ssrf": "R-024",
-    "open-redirect": "R-025",
-    "sensitive-data-exposure": "R-026",
     "authentication": "R-027",
+    "authorization": "R-021",
     "ci-workflow": "R-028",
+    "code-injection": "R-015",
+    "command-injection": "R-013",
     "excessive-permission": "R-029",
-    "other": "R-030"
+    "hardcoded-secret": "R-018",
+    "open-redirect": "R-025",
+    "other": "R-030",
+    "path-traversal": "R-022",
+    "sensitive-data-exposure": "R-026",
+    "sql-injection": "R-012",
+    "ssrf": "R-024",
+    "tls-disabled": "R-016",
+    "unsafe-deserialization": "R-014",
+    "weak-crypto": "R-017",
+    "xss": "R-023"
   },
   "secret_patterns": [
     {
@@ -421,7 +421,7 @@
         "*.jsx",
         "*.tsx"
       ],
-      "pattern": "<script\\b(?![^>]*\\bintegrity\\s*=)[^>]*\\bsrc\\s*=\\s*[\\\"'](?:https?:)?//"
+      "pattern": "<script\\b(?![^>]*\\bintegrity\\s*=)[^>]*\\bsrc\\s*=\\s*[\\\"'](?:https?:)?//[^>]*>"
     }
   ]
 }

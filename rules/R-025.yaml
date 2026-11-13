@@ -1,0 +1,36 @@
+id: R-025
+name: オープンリダイレクト
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-601 オープンリダイレクト
+  - OWASP Top 10:2025 A01 アクセス制御の不備
+message:
+  what: 入力された値を、そのままリダイレクト先に使っている
+  why: 正規のサイトの URL から、偽のサイトへ誘導される
+  fix: サイト内の場所（/ で始まり、// で始まらない）だけを許可する。フレームワークの安全な機能を使う
+examples:
+  bad:
+    - file: app/login.py
+      code: |
+        @app.get("/login/done")
+        def login_done():
+            return redirect(request.args.get("next", "/"))
+  good:
+    - file: app/login.py
+      code: |
+        @app.get("/login/done")
+        def login_done():
+            target = request.args.get("next", "/")
+            if not target.startswith("/") or target.startswith("//") or "\\" in target:
+                target = "/"
+            return redirect(target)
+detection:
+  - tool: ai-review
+    categories: [open-redirect]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

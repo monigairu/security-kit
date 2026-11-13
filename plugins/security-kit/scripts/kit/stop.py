@@ -144,9 +144,14 @@ def _open_notice(ctx, warns):
 
 def _summary(ctx, turn_warns, pending):
     """利用者に見せる、このターンのまとめ。ルールの名前と場所だけを書く。"""
-    def name(rule_id):
+    def name(rule_id, entry=None):
         rule = ctx.rule(rule_id)
-        return "%s %s" % (rule_id, rule["name"]) if rule else "（対応するルールなし）"
+        if rule:
+            return "%s %s" % (rule_id, rule["name"])
+        if entry and entry.get("tool_rule"):
+            # 検査ツールの説明文はコードの中身を含みうるので、番号だけを出す
+            return "%s %s（自社のルールに対応付けのない指摘）" % (entry.get("tool", ""), entry["tool_rule"])
+        return "（対応するルールなし）"
 
     lines = []
     checked = [w for w in turn_warns if w.get("status") in ("open", "fixed")]
@@ -164,7 +169,7 @@ def _summary(ctx, turn_warns, pending):
     if pending:
         lines.append("助言 %d件" % len(pending))
         for p in pending[:10]:
-            lines.append("  ・%s（%s）" % (name(p.get("rule")), core.where_text(p["file"], [p["line"]])))
+            lines.append("  ・%s（%s）" % (name(p.get("rule"), p), core.where_text(p["file"], [p["line"]])))
             core.record(ctx, file=p["file"], timing="stop", rule=p.get("rule"), severity="advise",
                         tool=p["tool"], tool_rule=p["tool_rule"], line=p["line"], fp=p["fp"],
                         action="summarized")

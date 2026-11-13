@@ -1,0 +1,38 @@
+id: R-024
+name: サーバーからの意図しない通信（SSRF）
+kind: own
+severity: warn
+level: 1
+domain: api
+status: active
+references:
+  - CWE-918 サーバーからの意図しない通信（SSRF）
+  - OWASP Top 10:2025 A01 アクセス制御の不備
+message:
+  what: 入力された値を、サーバーからの通信の宛先に使っている
+  why: 社内のシステムやクラウドの管理用の窓口に、サーバー経由でアクセスされる
+  fix: 宛先を許可リストで確認する。確認には、URL を解釈した後のホスト名を使う
+examples:
+  bad:
+    - file: app/preview.py
+      code: |
+        @app.post("/preview")
+        def preview(url: str):
+            return requests.get(url, timeout=5).text
+  good:
+    - file: app/preview.py
+      code: |
+        ALLOWED_HOSTS = {"api.example.com"}
+
+        @app.post("/preview")
+        def preview(url: str):
+            parsed = urllib.parse.urlsplit(url)
+            if parsed.scheme != "https" or parsed.hostname not in ALLOWED_HOSTS:
+                raise HTTPException(status_code=400)
+            return requests.get(url, timeout=5, allow_redirects=False).text
+detection:
+  - tool: ai-review
+    categories: [ssrf]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

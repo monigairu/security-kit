@@ -1,0 +1,451 @@
+{
+  "R-001": {
+    "tools": [
+      "gitleaks",
+      "kit-secret"
+    ],
+    "bad": [],
+    "good": [
+      {
+        "file": "app/config.py",
+        "code": "import os\n\nOPENAI_API_KEY = os.environ[\"OPENAI_API_KEY\"]\n"
+      }
+    ]
+  },
+  "R-012": {
+    "tools": [
+      "ai-review",
+      "ruff"
+    ],
+    "bad": [
+      {
+        "file": "app/db.py",
+        "code": "def find(cur, user_id):\n    cur.execute(f\"SELECT * FROM users WHERE id = {user_id}\")\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/db.py",
+        "code": "def find(cur, user_id):\n    cur.execute(\"SELECT * FROM users WHERE id = ?\", (user_id,))\n"
+      }
+    ]
+  },
+  "R-013": {
+    "tools": [
+      "ai-review",
+      "kit",
+      "ruff"
+    ],
+    "bad": [
+      {
+        "file": "app/image.py",
+        "code": "import subprocess\n\ndef thumbnail(name):\n    subprocess.run(f\"convert {name} out.png\", shell=True, check=True)\n"
+      },
+      {
+        "file": "web/image.js",
+        "code": "const { exec } = require(\"child_process\");\n\nexec(`convert ${name} out.png`);\n"
+      },
+      {
+        "file": "cmd/image.go",
+        "code": "cmd := exec.Command(\"sh\", \"-c\", \"convert \"+name+\" out.png\")\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/image.py",
+        "code": "import subprocess\n\ndef thumbnail(name):\n    subprocess.run([\"convert\", name, \"out.png\"], check=True)\n"
+      },
+      {
+        "file": "web/image.js",
+        "code": "const { execFile } = require(\"child_process\");\n\nexecFile(\"convert\", [name, \"out.png\"]);\n"
+      },
+      {
+        "file": "cmd/image.go",
+        "code": "cmd := exec.Command(\"convert\", name, \"out.png\")\n"
+      }
+    ]
+  },
+  "R-014": {
+    "tools": [
+      "ai-review",
+      "kit",
+      "ruff"
+    ],
+    "bad": [
+      {
+        "file": "app/load.py",
+        "code": "import pickle\n\ndef load(data):\n    return pickle.loads(data)\n"
+      },
+      {
+        "file": "app/conf.py",
+        "code": "import yaml\n\ndef load(text):\n    return yaml.load(text)\n"
+      },
+      {
+        "file": "app/model.py",
+        "code": "import torch\n\ndef load(path):\n    return torch.load(path)\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/load.py",
+        "code": "import json\n\ndef load(data):\n    return json.loads(data)\n"
+      },
+      {
+        "file": "app/conf.py",
+        "code": "import yaml\n\ndef load(text):\n    return yaml.safe_load(text)\n"
+      },
+      {
+        "file": "app/model.py",
+        "code": "import torch\n\ndef load(path):\n    return torch.load(path, weights_only=True)\n"
+      }
+    ]
+  },
+  "R-015": {
+    "tools": [
+      "ai-review",
+      "kit",
+      "ruff"
+    ],
+    "bad": [
+      {
+        "file": "app/calc.py",
+        "code": "def parse(text):\n    return eval(text)\n"
+      },
+      {
+        "file": "web/calc.js",
+        "code": "const value = eval(text);\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/calc.py",
+        "code": "import ast\n\ndef parse(text):\n    return ast.literal_eval(text)\n"
+      },
+      {
+        "file": "web/calc.js",
+        "code": "const value = JSON.parse(text);\n"
+      }
+    ]
+  },
+  "R-016": {
+    "tools": [
+      "ai-review",
+      "kit",
+      "ruff"
+    ],
+    "bad": [
+      {
+        "file": "app/client.py",
+        "code": "import requests\n\ndef fetch(url):\n    return requests.get(url, verify=False, timeout=10)\n"
+      },
+      {
+        "file": "web/client.js",
+        "code": "const agent = new https.Agent({ rejectUnauthorized: false });\n"
+      },
+      {
+        "file": "cmd/client.go",
+        "code": "cfg := &tls.Config{InsecureSkipVerify: true}\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/client.py",
+        "code": "import requests\n\ndef fetch(url):\n    return requests.get(url, verify=\"certs/company-ca.pem\", timeout=10)\n"
+      },
+      {
+        "file": "web/client.js",
+        "code": "const agent = new https.Agent({ ca: fs.readFileSync(\"certs/company-ca.pem\") });\n"
+      },
+      {
+        "file": "cmd/client.go",
+        "code": "cfg := &tls.Config{RootCAs: pool}\n"
+      }
+    ]
+  },
+  "R-017": {
+    "tools": [
+      "ai-review",
+      "kit",
+      "ruff"
+    ],
+    "bad": [
+      {
+        "file": "app/hash.py",
+        "code": "import hashlib\n\ndef digest(data):\n    return hashlib.md5(data).hexdigest()\n"
+      },
+      {
+        "file": "app/crypt.py",
+        "code": "from Crypto.Cipher import AES\n\ndef cipher(key):\n    return AES.new(key, AES.MODE_ECB)\n"
+      },
+      {
+        "file": "web/crypt.js",
+        "code": "const cipher = crypto.createCipher(\"aes-128-ecb\", key);\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/hash.py",
+        "code": "import hashlib\n\ndef digest(data):\n    return hashlib.sha256(data).hexdigest()\n"
+      },
+      {
+        "file": "app/etag.py",
+        "code": "import hashlib\n\ndef etag(data):\n    return hashlib.md5(data, usedforsecurity=False).hexdigest()\n"
+      },
+      {
+        "file": "app/crypt.py",
+        "code": "from Crypto.Cipher import AES\n\ndef cipher(key):\n    return AES.new(key, AES.MODE_GCM)\n"
+      },
+      {
+        "file": "web/crypt.js",
+        "code": "const cipher = crypto.createCipheriv(\"aes-256-gcm\", key, iv);\n"
+      }
+    ]
+  },
+  "R-018": {
+    "tools": [
+      "ai-review",
+      "ruff"
+    ],
+    "bad": [
+      {
+        "file": "app/settings.py",
+        "code": "DB_PASSWORD = \"s3cr3t-value\"\n"
+      },
+      {
+        "file": "app/db.py",
+        "code": "def connect(lib):\n    return lib.connect(host=\"db\", password=\"s3cr3t-value\")\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/settings.py",
+        "code": "import os\n\nDB_PASSWORD = os.environ[\"DB_PASSWORD\"]\n"
+      }
+    ]
+  },
+  "R-020": {
+    "tools": [
+      "kit"
+    ],
+    "bad": [
+      {
+        "file": "app/api.py",
+        "code": "@app.get(\"/users/{user_id}\")\ndef get_user(user_id: int):\n    return db.get_user(user_id)\n"
+      },
+      {
+        "file": "web/api.js",
+        "code": "app.get(\"/users/:id\", async (req, res) => {\n  res.json(await db.getUser(req.params.id));\n});\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/settings.py",
+        "code": "import functools\n\n@functools.cache\ndef load_settings():\n    return {}\n"
+      },
+      {
+        "file": "web/app.js",
+        "code": "app.use(express.json());\n"
+      }
+    ]
+  },
+  "R-021": {
+    "tools": [
+      "ai-review"
+    ],
+    "bad": [
+      {
+        "file": "app/orders.py",
+        "code": "@app.get(\"/orders/{order_id}\")\ndef get_order(order_id: int, user: User = Depends(current_user)):\n    return db.get_order(order_id)\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/orders.py",
+        "code": "@app.get(\"/orders/{order_id}\")\ndef get_order(order_id: int, user: User = Depends(current_user)):\n    order = db.get_order(order_id)\n    if order is None or order.owner_id != user.id:\n        raise HTTPException(status_code=404)\n    return order\n"
+      }
+    ]
+  },
+  "R-022": {
+    "tools": [
+      "ai-review"
+    ],
+    "bad": [
+      {
+        "file": "app/files.py",
+        "code": "def read_upload(name):\n    with open(os.path.join(UPLOAD_DIR, name), \"rb\") as f:\n        return f.read()\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/files.py",
+        "code": "def read_upload(name):\n    base = os.path.realpath(UPLOAD_DIR)\n    path = os.path.realpath(os.path.join(base, name))\n    if os.path.commonpath([base, path]) != base:\n        raise ValueError(\"許可していない場所\")\n    with open(path, \"rb\") as f:\n        return f.read()\n"
+      }
+    ]
+  },
+  "R-023": {
+    "tools": [
+      "ai-review",
+      "kit"
+    ],
+    "bad": [
+      {
+        "file": "web/comment.js",
+        "code": "el.innerHTML = comment.body;\n"
+      },
+      {
+        "file": "web/Comment.jsx",
+        "code": "<div dangerouslySetInnerHTML={{ __html: comment.body }} />\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "web/comment.js",
+        "code": "el.textContent = comment.body;\n"
+      },
+      {
+        "file": "web/Comment.jsx",
+        "code": "<div>{comment.body}</div>\n"
+      }
+    ]
+  },
+  "R-024": {
+    "tools": [
+      "ai-review"
+    ],
+    "bad": [
+      {
+        "file": "app/preview.py",
+        "code": "@app.post(\"/preview\")\ndef preview(url: str):\n    return requests.get(url, timeout=5).text\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/preview.py",
+        "code": "ALLOWED_HOSTS = {\"api.example.com\"}\n\n@app.post(\"/preview\")\ndef preview(url: str):\n    parsed = urllib.parse.urlsplit(url)\n    if parsed.scheme != \"https\" or parsed.hostname not in ALLOWED_HOSTS:\n        raise HTTPException(status_code=400)\n    return requests.get(url, timeout=5, allow_redirects=False).text\n"
+      }
+    ]
+  },
+  "R-025": {
+    "tools": [
+      "ai-review"
+    ],
+    "bad": [
+      {
+        "file": "app/login.py",
+        "code": "@app.get(\"/login/done\")\ndef login_done():\n    return redirect(request.args.get(\"next\", \"/\"))\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/login.py",
+        "code": "@app.get(\"/login/done\")\ndef login_done():\n    target = request.args.get(\"next\", \"/\")\n    if not target.startswith(\"/\") or target.startswith(\"//\") or \"\\\\\" in target:\n        target = \"/\"\n    return redirect(target)\n"
+      }
+    ]
+  },
+  "R-026": {
+    "tools": [
+      "ai-review"
+    ],
+    "bad": [
+      {
+        "file": "app/auth.py",
+        "code": "logger.info(\"login ok: email=%s token=%s\", user.email, token)\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/auth.py",
+        "code": "logger.info(\"login ok: user_id=%s\", user.id)\n"
+      }
+    ]
+  },
+  "R-027": {
+    "tools": [
+      "ai-review"
+    ],
+    "bad": [
+      {
+        "file": "app/reset.py",
+        "code": "import random\n\ndef new_reset_token():\n    return str(random.randint(100000, 999999))\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "app/reset.py",
+        "code": "import secrets\n\ndef new_reset_token():\n    return secrets.token_urlsafe(32)\n"
+      }
+    ]
+  },
+  "R-028": {
+    "tools": [
+      "ai-review",
+      "kit"
+    ],
+    "bad": [
+      {
+        "file": ".github/workflows/greet.yml",
+        "code": "on: issues\njobs:\n  greet:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo \"${{ github.event.issue.title }}\"\n"
+      },
+      {
+        "file": ".github/workflows/ci.yml",
+        "code": "on: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n"
+      },
+      {
+        "file": ".github/workflows/label.yml",
+        "code": "on: pull_request_target\njobs:\n  label:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo labeling\n"
+      }
+    ],
+    "good": [
+      {
+        "file": ".github/workflows/greet.yml",
+        "code": "on: issues\njobs:\n  greet:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo \"$TITLE\"\n        env:\n          TITLE: ${{ github.event.issue.title }}\n"
+      },
+      {
+        "file": ".github/workflows/ci.yml",
+        "code": "on: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567 # v4\n"
+      },
+      {
+        "file": ".github/workflows/label.yml",
+        "code": "on: pull_request\njobs:\n  label:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo labeling\n"
+      }
+    ]
+  },
+  "R-029": {
+    "tools": [
+      "ai-review"
+    ],
+    "bad": [
+      {
+        "file": "infra/policy.json",
+        "code": "{\n  \"Statement\": [{ \"Effect\": \"Allow\", \"Action\": \"*\", \"Resource\": \"*\" }]\n}\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "infra/policy.json",
+        "code": "{\n  \"Statement\": [{ \"Effect\": \"Allow\", \"Action\": [\"s3:GetObject\"], \"Resource\": \"arn:aws:s3:::reports/*\" }]\n}\n"
+      }
+    ]
+  },
+  "R-031": {
+    "tools": [
+      "kit"
+    ],
+    "bad": [
+      {
+        "file": "web/index.html",
+        "code": "<script src=\"https://cdn.example.com/chart.min.js\"></script>\n"
+      }
+    ],
+    "good": [
+      {
+        "file": "web/index.html",
+        "code": "<script src=\"https://cdn.example.com/chart.min.js\"\n        integrity=\"sha384-（配布元が示す値）\" crossorigin=\"anonymous\"></script>\n"
+      },
+      {
+        "file": "web/app.html",
+        "code": "<script src=\"/static/app.js\"></script>\n"
+      }
+    ]
+  }
+}

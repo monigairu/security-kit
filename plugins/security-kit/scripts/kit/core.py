@@ -17,7 +17,12 @@ PLUGIN_ROOT = os.environ.get("CLAUDE_PLUGIN_ROOT") or os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
 
-EXPLAIN_FIRST = "→ 黙って直さず、利用者に「ひとこと：〜」の形で理由と直し方を伝えてから修正してください。"
+EXPLAIN_FIRST = ("→ 黙って直さず、利用者に「ひとこと：〜」の形で理由と直し方を伝えてから修正してください。"
+                 "除外の印は、利用者が認めたときだけ付けてください。")
+
+# 止めたときの指示。Skill が読み込まれていなくても届くよう、通知に入れる
+BLOCKED = ("→ 書き込みは行われていません。Bash など別の方法で同じ内容を書かないでください。"
+           "利用者に「ひとこと：〜」の形で理由を伝えてから、安全な方法で書き直してください。")
 
 
 def which(name):
@@ -167,11 +172,12 @@ def record(ctx, file="", **fields):
         f.write(json.dumps(row, ensure_ascii=False) + "\n")
 
 
-def notice(head_label, rule_id, rule, where, extra_lines=()):
+def notice(head_label, rule_id, rule, where, extra_lines=(), more=True):
     """Claude への通知文（基本設計書 3.6）。
 
     入れてよいのは、ルールの文章・ファイル名・行番号だけ。
     検査対象のコードの中身は入れない（NFR-13）。
+    more=True のときは、利用者が詳しく知るための相談コマンドを添える。
     """
     lines = [
         "[security-kit] %s %s %s" % (head_label, rule_id, rule["name"]),
@@ -180,6 +186,8 @@ def notice(head_label, rule_id, rule, where, extra_lines=()):
         "なぜ危ないか: " + rule["why"],
         "どう直すか: " + rule["fix"],
     ]
+    if more:
+        lines.append("詳しく: /security-kit:consult " + rule_id)
     return "\n".join(lines + list(extra_lines))
 
 

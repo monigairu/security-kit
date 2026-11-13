@@ -1,0 +1,53 @@
+id: R-016
+name: 通信相手の確認を無効にしている
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-295 証明書の検証の不備
+message:
+  what: HTTPS の証明書の検証を無効にしている（verify=False）
+  why: 通信を途中で盗み見られたり、書き換えられたりしても気づけない
+  fix: 証明書の検証を有効のままにする。社内の証明書を使う場合は、その証明書を指定する
+examples:
+  bad:
+    - file: app/client.py
+      code: |
+        import requests
+
+        def fetch(url):
+            return requests.get(url, verify=False, timeout=10)
+    - file: web/client.js
+      code: |
+        const agent = new https.Agent({ rejectUnauthorized: false });
+    - file: cmd/client.go
+      code: |
+        cfg := &tls.Config{InsecureSkipVerify: true}
+  good:
+    - file: app/client.py
+      note: 社内の証明書を指定する
+      code: |
+        import requests
+
+        def fetch(url):
+            return requests.get(url, verify="certs/company-ca.pem", timeout=10)
+    - file: web/client.js
+      code: |
+        const agent = new https.Agent({ ca: fs.readFileSync("certs/company-ca.pem") });
+    - file: cmd/client.go
+      code: |
+        cfg := &tls.Config{RootCAs: pool}
+detection:
+  - tool: ruff
+    ids: ['S501']
+  - tool: kit
+    id: K-013
+    paths: ['*.js', '*.jsx', '*.ts', '*.tsx', '*.mjs', '*.cjs', '*.mts', '*.cts', '*.vue', '*.svelte', '*.go']
+    pattern: '\brejectUnauthorized\s*:\s*false\b|NODE_TLS_REJECT_UNAUTHORIZED\s*=\s*[\"'']?0|\bInsecureSkipVerify\s*:\s*true\b'
+  - tool: ai-review
+    categories: [tls-disabled]
+confidence: high
+owner: monigairu
+last_reviewed: 2026-11-14

@@ -1,0 +1,64 @@
+id: R-001
+name: 秘密情報をコードに直接書かない
+kind: own
+severity: block
+level: 1
+domain: secret
+status: active
+references:
+  - CWE-798 認証情報の直書き
+  - 要件定義書 11章 R-001
+message:
+  what: API キーやパスワードなどの秘密情報を、ファイルに直接書こうとしている
+  why: ファイルが共有されたり GitHub に上がったりすると、その鍵で不正に利用される
+  fix: 値は環境変数や秘密情報の管理の仕組みから読み込み、ファイルには書かない
+examples:
+  bad: []
+  good:
+    - file: app/config.py
+      note: 環境変数から読み込む
+      code: |
+        import os
+
+        OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+  note: 違反例は、ファイルに完成形の鍵を書けないため、tests/hooks/test_hooks.py で実行時に組み立てて確かめる
+detection:
+  - tool: kit-secret
+    patterns:
+      - id: aws-access-key
+        pattern: '\b(?:AKIA|ASIA|ABIA|ACCA)[A-Z2-7]{16}\b'
+      - id: github-token
+        pattern: '\bgh[pousr]_[A-Za-z0-9]{36,255}\b'
+      - id: github-fine-grained-token
+        pattern: '\bgithub_pat_[A-Za-z0-9_]{60,255}\b'
+      - id: gitlab-token
+        pattern: '\bglpat-[A-Za-z0-9_-]{20,}'
+      - id: slack-token
+        pattern: '\bxox[abeoprs]-[A-Za-z0-9-]{10,}'
+      - id: slack-webhook
+        pattern: 'https://hooks\.slack\.com/services/T[A-Za-z0-9_]+/B[A-Za-z0-9_]+/[A-Za-z0-9_]+'
+      - id: stripe-key
+        pattern: '\b[sr]k_live_[A-Za-z0-9]{20,}'
+      - id: anthropic-api-key
+        pattern: '\bsk-ant-[A-Za-z0-9_-]{20,}'
+      - id: openai-api-key
+        pattern: '\bsk-(?:proj|svcacct|admin)-[A-Za-z0-9_-]{20,}'
+      - id: openai-api-key-legacy
+        pattern: '\bsk-[A-Za-z0-9]{20}T3BlbkFJ[A-Za-z0-9]{20}\b'
+      - id: google-api-key
+        pattern: '\bAIza[0-9A-Za-z_-]{35}\b'
+      - id: huggingface-token
+        pattern: '\bhf_[A-Za-z0-9]{30,}\b'
+      - id: npm-token
+        pattern: '\bnpm_[A-Za-z0-9]{36}\b'
+      - id: pypi-token
+        pattern: '\bpypi-AgEIcHlwaS5vcmc[A-Za-z0-9_-]{50,}'
+      - id: sendgrid-key
+        pattern: '\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b'
+      - id: private-key
+        pattern: '-----BEGIN [A-Z0-9 ]*PRIVATE KEY(?: BLOCK)?-----'
+  - tool: gitleaks
+    ids: ['*']
+confidence: high
+owner: monigairu
+last_reviewed: 2026-11-14

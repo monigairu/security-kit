@@ -269,10 +269,19 @@ class PostWriteTest(HookTestCase):
         pending = self.state()["pending_advice"]
         self.assertEqual([(p["rule"], p["line"]) for p in pending], [("R-017", 4)])
 
-    def test_APIの入口を書いたら認可の助言を覚えておく(self):
-        self.write("app/api.py", "from fastapi import FastAPI\napp = FastAPI()\n\n@app.get('/users/{user_id}')\ndef get_user(user_id: int):\n    return {}\n")
-        self.assertIsNone(self.post("app/api.py"))
+    def test_APIの入口を書いたら認可を確かめるよう伝えて覚えておく(self):
+        # 助言のうち認可の確認だけは、Claude にも伝える（基本設計書 3.12）
+        api = "from fastapi import FastAPI\napp = FastAPI()\n\n@app.get('/users/{user_id}')\ndef get_user(user_id: int):\n    return {}\n"
+        self.write("app/api.py", api)
+        ctx = self.post("app/api.py")["additionalContext"]
+        self.assertIn("助言 R-020", ctx)
+        self.assertIn("app/api.py 4行目", ctx)
+        self.assertIn("テスト", ctx)
         self.assertIn("R-020", [p["rule"] for p in self.state()["pending_advice"]])
+
+        # 同じファイルに入口を足しても、セッションで1回だけ
+        self.write("app/api.py", api + "\n@app.delete('/users/{user_id}')\ndef delete_user(user_id: int):\n    return {}\n")
+        self.assertIsNone(self.post("app/api.py"))
 
     def test_文書のファイルでは何も起きない(self):
         # 文章の中に危ない書き方の例が出てきても、コードではないので反応しない

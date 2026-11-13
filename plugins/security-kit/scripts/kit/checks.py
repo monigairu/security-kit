@@ -11,9 +11,10 @@ import subprocess
 from . import core, gitstate
 
 
-def scan_file(ctx, ref, baseline):
+def scan_file(ctx, ref, baseline, whole=False):
     """ファイルを検査し、このターンで変えた行の指摘だけを返す。
 
+    whole=True のときは、ファイル全体の指摘を返す（相談コマンドで、ファイルを名指しされたとき）。
     返す形: (指摘の一覧, 入っていなかった検査ツールの一覧)
     指摘: {"rule": ルール ID か None, "severity", "tool", "code", "line", "fp"}
     """
@@ -29,7 +30,7 @@ def scan_file(ctx, ref, baseline):
     raw += _kit_checks(ctx, ref, lines)
 
     # このターンで変えた行に重なる指摘だけを残す（以前からある問題は伝えない）
-    ranges = gitstate.line_ranges(ctx.root, baseline, ref.abs_path, ref.rel_path)
+    ranges = None if whole else gitstate.line_ranges(ctx.root, baseline, ref.abs_path, ref.rel_path)
     if ranges is not None:
         raw = [f for f in raw if any(a <= f["line"] <= b for a, b in ranges)]
 

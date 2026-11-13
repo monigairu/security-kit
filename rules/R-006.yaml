@@ -1,0 +1,24 @@
+id: R-006
+name: 許可リストにない MCP サーバー・プラグインを入れない
+kind: own
+severity: block
+level: 1
+domain: ai
+status: draft
+references:
+  - 要件定義書 11章 R-006
+  - OWASP Top 10 for LLM Applications 2025 LLM03 サプライチェーン
+message:
+  what: 許可リストにない MCP サーバーやプラグインを入れようとしている
+  why: 悪性の Skill や MCP サーバーに、認証情報を盗まれた例が報告されている
+  fix: 許可リストにあるものを使う。新しく使いたいものは、ルールの担当者に申請する
+examples:
+  bad: []
+  good: []
+  note: 設定と運用で守るルールのため、すり抜けテスト（NFR-07）で確かめる
+detection:
+  - tool: process
+    note: 強制設定ファイルの許可リストで、許可した MCP サーバーとプラグインだけを使えるようにする（FR-27）
+confidence: high
+owner: monigairu
+last_reviewed: 2026-11-14

@@ -1,0 +1,38 @@
+id: R-021
+name: 認可の漏れ
+kind: own
+severity: warn
+level: 1
+domain: api
+status: active
+references:
+  - CWE-639 利用者が指定するキーによる認可の回避
+  - CWE-862 認可の欠如
+  - OWASP Top 10:2025 A01 アクセス制御の不備
+message:
+  what: ほかの利用者のデータを読み書きできる処理になっている可能性がある
+  why: ID を変えるだけで、他人のデータを見られたり書き換えられたりする
+  fix: 処理の中で、ログイン中の利用者がそのデータの持ち主（または権限のある人）かを確認する。他人のデータにアクセスできないことを確かめるテストを書く
+examples:
+  bad:
+    - file: app/orders.py
+      note: ログインは確かめているが、注文の持ち主かを確かめていない
+      code: |
+        @app.get("/orders/{order_id}")
+        def get_order(order_id: int, user: User = Depends(current_user)):
+            return db.get_order(order_id)
+  good:
+    - file: app/orders.py
+      code: |
+        @app.get("/orders/{order_id}")
+        def get_order(order_id: int, user: User = Depends(current_user)):
+            order = db.get_order(order_id)
+            if order is None or order.owner_id != user.id:
+                raise HTTPException(status_code=404)
+            return order
+detection:
+  - tool: ai-review
+    categories: [authorization]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

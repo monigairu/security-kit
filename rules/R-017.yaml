@@ -1,0 +1,67 @@
+id: R-017
+name: 弱いハッシュ・暗号の使用
+kind: own
+severity: advise
+level: 1
+domain: code
+status: active
+references:
+  - CWE-327 弱い暗号の使用
+  - CWE-328 弱いハッシュの使用
+  - OWASP Top 10:2025 A04 暗号化の失敗
+message:
+  what: MD5・SHA-1 などの弱いハッシュや、古い暗号の方式を使っている
+  why: パスワードの保存や暗号化に使うと、破られるおそれがある
+  fix: SHA-256 以上や AES-GCM などを使う。パスワードの保存には専用の方式（bcrypt、argon2 など）を使う
+examples:
+  bad:
+    - file: app/hash.py
+      code: |
+        import hashlib
+
+        def digest(data):
+            return hashlib.md5(data).hexdigest()
+    - file: app/crypt.py
+      code: |
+        from Crypto.Cipher import AES
+
+        def cipher(key):
+            return AES.new(key, AES.MODE_ECB)
+    - file: web/crypt.js
+      code: |
+        const cipher = crypto.createCipher("aes-128-ecb", key);
+  good:
+    - file: app/hash.py
+      code: |
+        import hashlib
+
+        def digest(data):
+            return hashlib.sha256(data).hexdigest()
+    - file: app/etag.py
+      note: 安全のためではない用途（キャッシュの目印など）だと明示する
+      code: |
+        import hashlib
+
+        def etag(data):
+            return hashlib.md5(data, usedforsecurity=False).hexdigest()
+    - file: app/crypt.py
+      code: |
+        from Crypto.Cipher import AES
+
+        def cipher(key):
+            return AES.new(key, AES.MODE_GCM)
+    - file: web/crypt.js
+      code: |
+        const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+detection:
+  - tool: ruff
+    ids: ['S324']
+  - tool: kit
+    id: K-014
+    paths: ['*.js', '*.jsx', '*.ts', '*.tsx', '*.mjs', '*.cjs', '*.mts', '*.cts', '*.vue', '*.svelte', '*.py', '*.go']
+    pattern: '\bcrypto\.create(?:Cipher|Decipher)\s*\(|[\"'']aes-\d+-ecb[\"'']|\bAES\.MODE_ECB\b|\bmodes\.ECB\s*\('
+  - tool: ai-review
+    categories: [weak-crypto]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

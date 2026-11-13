@@ -1,0 +1,33 @@
+id: R-029
+name: 権限の与えすぎ
+kind: own
+severity: warn
+level: 1
+domain: config
+status: active
+references:
+  - CWE-250 不要な権限での実行
+  - OWASP Top 10 for LLM Applications 2025 LLM06 過剰な権限
+message:
+  what: 目的に対して広すぎる権限を与えている（IAM・RBAC の設定、AI エージェントの権限など）
+  why: 乗っ取られたときに、被害が必要以上に広がる
+  fix: 必要な操作と対象だけに絞る。AI エージェントに、確認なしで何でも実行できる設定を与えない
+examples:
+  bad:
+    - file: infra/policy.json
+      code: |
+        {
+          "Statement": [{ "Effect": "Allow", "Action": "*", "Resource": "*" }]
+        }
+  good:
+    - file: infra/policy.json
+      code: |
+        {
+          "Statement": [{ "Effect": "Allow", "Action": ["s3:GetObject"], "Resource": "arn:aws:s3:::reports/*" }]
+        }
+detection:
+  - tool: ai-review
+    categories: [excessive-permission]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

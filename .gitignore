@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# キットの生成スクリプト（上の build/ は Python の配布物用。一番上の build/ は git に入れる）
+!/build/

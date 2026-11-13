@@ -1,0 +1,65 @@
+id: R-014
+name: 安全でないデータの読み込み
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-502 信頼できないデータの復元
+  - OWASP Top 10:2025 A08 ソフトウェアとデータの整合性の不備
+message:
+  what: 読み込むだけでコードが実行されうる形式（pickle、安全でない YAML の読み込み）を使っている
+  why: 細工されたデータを読み込むと、任意のコードを実行される
+  fix: JSON など実行を伴わない形式を使う。YAML は安全な読み込み方（safe_load）を使う
+examples:
+  bad:
+    - file: app/load.py
+      code: |
+        import pickle
+
+        def load(data):
+            return pickle.loads(data)
+    - file: app/conf.py
+      code: |
+        import yaml
+
+        def load(text):
+            return yaml.load(text)
+    - file: app/model.py
+      code: |
+        import torch
+
+        def load(path):
+            return torch.load(path)
+  good:
+    - file: app/load.py
+      code: |
+        import json
+
+        def load(data):
+            return json.loads(data)
+    - file: app/conf.py
+      code: |
+        import yaml
+
+        def load(text):
+            return yaml.safe_load(text)
+    - file: app/model.py
+      code: |
+        import torch
+
+        def load(path):
+            return torch.load(path, weights_only=True)
+detection:
+  - tool: ruff
+    ids: ['S301', 'S506']
+  - tool: kit
+    id: K-016
+    paths: ['*.py']
+    pattern: '\btorch\.load\s*\((?![^)\n]*\bweights_only\s*=\s*True)|\bjoblib\.load\s*\(|\b(?:pd|pandas)\.read_pickle\s*\(|\b(?:cloudpickle|dill)\.loads?\s*\('
+  - tool: ai-review
+    categories: [unsafe-deserialization]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

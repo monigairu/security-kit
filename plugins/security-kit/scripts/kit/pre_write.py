@@ -32,15 +32,12 @@ def run(ctx):
     places = "、".join("%d行目（種類: %s）" % (h["line"], h["kind"]) for h in hits[:5])
     where = "%s（書き込もうとした内容の %s）" % (ref.rel_path, places)
     escape = (
-        "誤検知のとき: テスト用のダミーなどで問題ない場合は、その行の末尾に「gitleaks:allow」と理由を"
-        "コメントで書くと除外できます。印の追加は PR でレビューされます。"
+        "誤検知のとき: テスト用のダミーなどで問題ないかを、利用者に確かめてください。利用者が認めたときだけ、"
+        "その行の末尾に「gitleaks:allow」と理由をコメントで書いて除外できます。印の追加は PR でレビューされます。"
     )
 
     if enforce:
-        msg = core.notice("止めました", RULE_ID, rule, where, [
-            escape,
-            "→ 書き込みは行われていません。利用者に「ひとこと：〜」の形で理由を伝えてから、安全な方法で書き直してください。",
-        ])
+        msg = core.notice("止めました", RULE_ID, rule, where, [escape, core.BLOCKED])
         return {"hookSpecificOutput": {
             "hookEventName": "PreToolUse",
             "permissionDecision": "deny",

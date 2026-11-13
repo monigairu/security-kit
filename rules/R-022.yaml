@@ -1,0 +1,37 @@
+id: R-022
+name: パストラバーサル
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-22 パストラバーサル
+  - OWASP Top 10:2025 A01 アクセス制御の不備
+message:
+  what: 入力された値を使って、ファイルの場所を組み立てている
+  why: 「../」などを使って、想定していない場所のファイルを読まれたり書き換えられたりする
+  fix: 実際の場所（リンクをたどった後）を求めてから、許可したフォルダの中にあることを確認する
+examples:
+  bad:
+    - file: app/files.py
+      code: |
+        def read_upload(name):
+            with open(os.path.join(UPLOAD_DIR, name), "rb") as f:
+                return f.read()
+  good:
+    - file: app/files.py
+      code: |
+        def read_upload(name):
+            base = os.path.realpath(UPLOAD_DIR)
+            path = os.path.realpath(os.path.join(base, name))
+            if os.path.commonpath([base, path]) != base:
+                raise ValueError("許可していない場所")
+            with open(path, "rb") as f:
+                return f.read()
+detection:
+  - tool: ai-review
+    categories: [path-traversal]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

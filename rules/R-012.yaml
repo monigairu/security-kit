@@ -1,0 +1,33 @@
+id: R-012
+name: SQL インジェクション
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-89 SQL インジェクション
+  - OWASP Top 10:2025 A05 インジェクション
+message:
+  what: 入力された値をそのまま SQL 文につなげている
+  why: 外部から SQL の命令を仕込まれ、データを盗まれたり消されたりする
+  fix: プレースホルダー（? や :name）を使い、値は別に渡す
+examples:
+  bad:
+    - file: app/db.py
+      code: |
+        def find(cur, user_id):
+            cur.execute(f"SELECT * FROM users WHERE id = {user_id}")
+  good:
+    - file: app/db.py
+      code: |
+        def find(cur, user_id):
+            cur.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+detection:
+  - tool: ruff
+    ids: ['S608']
+  - tool: ai-review
+    categories: [sql-injection]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

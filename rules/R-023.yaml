@@ -1,0 +1,39 @@
+id: R-023
+name: クロスサイトスクリプティング（XSS）
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-79 クロスサイトスクリプティング
+  - OWASP Top 10:2025 A05 インジェクション
+message:
+  what: 入力された値を、そのまま HTML として画面に出している
+  why: 利用者のブラウザで攻撃者のスクリプトが動き、ログイン情報を盗まれたり操作されたりする
+  fix: 文字として出力する方法（textContent など）を使う。HTML が必要なら、無害化のライブラリを通す
+examples:
+  bad:
+    - file: web/comment.js
+      code: |
+        el.innerHTML = comment.body;
+    - file: web/Comment.jsx
+      code: |
+        <div dangerouslySetInnerHTML={{ __html: comment.body }} />
+  good:
+    - file: web/comment.js
+      code: |
+        el.textContent = comment.body;
+    - file: web/Comment.jsx
+      code: |
+        <div>{comment.body}</div>
+detection:
+  - tool: kit
+    id: K-012
+    paths: ['*.js', '*.jsx', '*.ts', '*.tsx', '*.mjs', '*.cjs', '*.mts', '*.cts', '*.vue', '*.svelte']
+    pattern: '\.(?:innerHTML|outerHTML)\s*=(?!=)|\.insertAdjacentHTML\s*\(|\bdocument\.write(?:ln)?\s*\(|\bdangerouslySetInnerHTML\b'
+  - tool: ai-review
+    categories: [xss]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

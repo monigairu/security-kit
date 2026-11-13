@@ -1,0 +1,36 @@
+id: R-027
+name: 認証の不備
+kind: own
+severity: warn
+level: 1
+domain: api
+status: active
+references:
+  - CWE-287 認証の不備
+  - CWE-330 予測できる乱数の使用
+  - OWASP Top 10:2025 A07 認証の失敗
+message:
+  what: ログインや本人確認の処理に、すり抜けられる弱点がある
+  why: 他人になりすまされたり、ログインなしで使われたりする
+  fix: フレームワークの認証の仕組みを使う。トークンには安全な乱数を使い、パスワードは専用の方式で保存する
+examples:
+  bad:
+    - file: app/reset.py
+      code: |
+        import random
+
+        def new_reset_token():
+            return str(random.randint(100000, 999999))
+  good:
+    - file: app/reset.py
+      code: |
+        import secrets
+
+        def new_reset_token():
+            return secrets.token_urlsafe(32)
+detection:
+  - tool: ai-review
+    categories: [authentication]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

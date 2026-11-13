@@ -1,0 +1,28 @@
+id: R-004
+name: 悪性と判明している、または公開直後のパッケージを入れない
+kind: own
+severity: block
+level: 1
+domain: dependency
+status: draft
+references:
+  - 要件定義書 11章 R-004
+  - OWASP Top 10:2025 A03 ソフトウェアサプライチェーンの不備
+message:
+  what: 悪性と判明している、または公開から7日未満のパッケージを入れようとしている
+  why: 乗っ取られたパッケージや名前の似た偽物を入れると、PC や秘密情報を盗まれる
+  fix: 公開から7日以上たった版を使い、ロックファイルで版を固定する
+examples:
+  bad: []
+  good: []
+  note: 設定と運用で守るルールのため、すり抜けテスト（NFR-07）で確かめる
+detection:
+  - tool: osv
+    ids: ['*']
+  - tool: process
+    note: パッケージの導入前に、OSV と公開日を確かめる（FR-22）
+  - tool: process
+    note: 公開から7日未満の版を入れない設定と、ロックファイルを使う（FR-23）
+confidence: high
+owner: monigairu
+last_reviewed: 2026-11-14

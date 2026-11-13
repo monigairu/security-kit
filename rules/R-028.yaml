@@ -1,0 +1,90 @@
+id: R-028
+name: GitHub Actions の危ない書き方
+kind: own
+severity: warn
+level: 1
+domain: workflow
+status: active
+references:
+  - CWE-78 OS コマンドインジェクション
+  - CWE-829 信頼できない機能の取り込み
+  - OWASP Top 10:2025 A03 ソフトウェアサプライチェーンの不備
+message:
+  what: ワークフローに、外部から操作できる値の埋め込み、固定していない Action、危ない起動方法のいずれかがある
+  why: issue や PR の題名などからコマンドを仕込まれたり、乗っ取られた Action に秘密情報を盗まれたりする
+  fix: 外部から来る値は env を経由して渡す。Action はコミット SHA で固定する。pull_request_target は使わない
+examples:
+  bad:
+    - file: .github/workflows/greet.yml
+      note: issue の題名がそのままコマンドに入る
+      code: |
+        on: issues
+        jobs:
+          greet:
+            runs-on: ubuntu-latest
+            steps:
+              - run: echo "${{ github.event.issue.title }}"
+    - file: .github/workflows/ci.yml
+      note: 版の名前（v4）は付け替えられる
+      code: |
+        on: push
+        jobs:
+          test:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: actions/checkout@v4
+    - file: .github/workflows/label.yml
+      code: |
+        on: pull_request_target
+        jobs:
+          label:
+            runs-on: ubuntu-latest
+            steps:
+              - run: echo labeling
+  good:
+    - file: .github/workflows/greet.yml
+      note: env を経由して渡す
+      code: |
+        on: issues
+        jobs:
+          greet:
+            runs-on: ubuntu-latest
+            steps:
+              - run: echo "$TITLE"
+                env:
+                  TITLE: ${{ github.event.issue.title }}
+    - file: .github/workflows/ci.yml
+      note: コミット SHA で固定する（SHA は例。実際の値は Action のリリースで確かめる）
+      code: |
+        on: push
+        jobs:
+          test:
+            runs-on: ubuntu-latest
+            steps:
+              - uses: actions/checkout@0123456789abcdef0123456789abcdef01234567 # v4
+    - file: .github/workflows/label.yml
+      code: |
+        on: pull_request
+        jobs:
+          label:
+            runs-on: ubuntu-latest
+            steps:
+              - run: echo labeling
+detection:
+  - tool: kit
+    id: K-017
+    paths: ['.github/workflows/*.yml', '.github/workflows/*.yaml']
+    pattern: '^(?!\s*(?:[A-Z][A-Z0-9_]*|if)\s*:).*\$\{\{[^}]*github\.(?:head_ref|event\.(?:client_payload\b|(?:issue|pull_request|comment|review|review_comment|discussion|head_commit|commits|pages)\b[\w.\[\]*''\"-]*\.(?:title|body|message|name|email|label|ref|page_name)\b))'
+  - tool: kit
+    id: K-018
+    paths: ['.github/workflows/*.yml', '.github/workflows/*.yaml']
+    pattern: '^\s*-?\s*uses:\s*(?!\./|docker://)[\w.-]+/[\w./-]+@(?![0-9a-f]{40}\b)\S+'
+  - tool: kit
+    id: K-019
+    paths: ['.github/workflows/*.yml', '.github/workflows/*.yaml']
+    pattern: '\bpull_request_target\b'
+  - tool: ai-review
+    categories: [ci-workflow]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

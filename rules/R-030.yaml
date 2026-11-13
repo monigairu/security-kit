@@ -1,0 +1,23 @@
+id: R-030
+name: その他の脆弱性（AI レビュー）
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - AI レビューの手引き（plugins/security-kit/data/review_prompt.md）
+message:
+  what: AI レビューが、分類に当てはまらない脆弱性の可能性を指摘した
+  why: 内容は下のメモを参照。攻撃に悪用できる可能性がある
+  fix: メモの内容を確かめ、当てはまる場合は修正する
+examples:
+  bad: []
+  good: []
+  note: 分類に当てはまらない指摘の受け皿のため、例は無い
+detection:
+  - tool: ai-review
+    categories: [other]
+confidence: low
+owner: monigairu
+last_reviewed: 2026-11-14

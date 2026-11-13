@@ -1,0 +1,30 @@
+id: R-026
+name: 秘密情報・個人情報の露出
+kind: own
+severity: warn
+level: 1
+domain: data
+status: active
+references:
+  - CWE-532 ログへの機密情報の出力
+  - CWE-209 エラーメッセージによる情報の露出
+  - CWE-598 URL の問い合わせ文字列での機密情報の送信
+message:
+  what: 秘密情報や個人情報を、ログ・URL・エラーの応答に出している
+  why: ログや履歴を見られる人に、鍵や個人情報が渡ってしまう
+  fix: ログやエラーには出さない。必要なら一部を伏せる。鍵を URL に入れない
+examples:
+  bad:
+    - file: app/auth.py
+      code: |
+        logger.info("login ok: email=%s token=%s", user.email, token)
+  good:
+    - file: app/auth.py
+      code: |
+        logger.info("login ok: user_id=%s", user.id)
+detection:
+  - tool: ai-review
+    categories: [sensitive-data-exposure]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

@@ -1,0 +1,28 @@
+id: R-005
+name: 患者データ・本番データを AI や外部サービスに渡さない
+kind: own
+severity: block
+level: 1
+domain: data
+status: draft
+references:
+  - 要件定義書 11章 R-005
+message:
+  what: 患者データや本番データを読もうとしている
+  why: AI や外部サービスに渡ると、法令上・信頼上の影響が最も大きい
+  fix: 開発にはダミーのデータを使う
+examples:
+  bad: []
+  good: []
+  note: 設定と運用で守るルールのため、すり抜けテスト（NFR-07）で確かめる
+detection:
+  - tool: settings
+    deny:
+      - 'Read(**/*.dcm)'
+  - tool: process
+    note: 患者データ・本番データを開発機とリポジトリに置かない
+  - tool: process
+    note: データ区分のルールに従う（要件定義書 12章）
+confidence: high
+owner: monigairu
+last_reviewed: 2026-11-14

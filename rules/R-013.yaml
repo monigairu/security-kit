@@ -1,0 +1,61 @@
+id: R-013
+name: OS コマンドインジェクション
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-78 OS コマンドインジェクション
+  - OWASP Top 10:2025 A05 インジェクション
+message:
+  what: シェルを通してコマンドを実行している
+  why: 入力された値がコマンドの一部として解釈され、任意のコマンドを実行される
+  fix: シェルを通さず、コマンドと引数をリストで渡す（shell=True を使わない）
+examples:
+  bad:
+    - file: app/image.py
+      code: |
+        import subprocess
+
+        def thumbnail(name):
+            subprocess.run(f"convert {name} out.png", shell=True, check=True)
+    - file: web/image.js
+      code: |
+        const { exec } = require("child_process");
+
+        exec(`convert ${name} out.png`);
+    - file: cmd/image.go
+      code: |
+        cmd := exec.Command("sh", "-c", "convert "+name+" out.png")
+  good:
+    - file: app/image.py
+      code: |
+        import subprocess
+
+        def thumbnail(name):
+            subprocess.run(["convert", name, "out.png"], check=True)
+    - file: web/image.js
+      code: |
+        const { execFile } = require("child_process");
+
+        execFile("convert", [name, "out.png"]);
+    - file: cmd/image.go
+      code: |
+        cmd := exec.Command("convert", name, "out.png")
+detection:
+  - tool: ruff
+    ids: ['S602', 'S604', 'S605']
+  - tool: kit
+    id: K-010
+    paths: ['*.js', '*.jsx', '*.ts', '*.tsx', '*.mjs', '*.cjs', '*.mts', '*.cts', '*.vue', '*.svelte']
+    pattern: '\bchild_process\.exec(?:Sync)?\s*\(|\bexecSync\s*\(|(?<![\w.$])exec\s*\('
+  - tool: kit
+    id: K-015
+    paths: ['*.go']
+    pattern: '\bexec\.Command\(\s*\"(?:sh|bash|/bin/sh|/bin/bash)\"'
+  - tool: ai-review
+    categories: [command-injection]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

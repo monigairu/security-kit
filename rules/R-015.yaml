@@ -1,0 +1,45 @@
+id: R-015
+name: 文字列をコードとして実行している
+kind: own
+severity: warn
+level: 1
+domain: code
+status: active
+references:
+  - CWE-95 文字列をコードとして実行
+  - OWASP Top 10:2025 A05 インジェクション
+message:
+  what: eval や exec で、文字列をコードとして実行している
+  why: 入力された値が含まれると、任意のコードを実行される
+  fix: eval・exec を使わない書き方にする。値の変換だけなら ast.literal_eval を使う
+examples:
+  bad:
+    - file: app/calc.py
+      code: |
+        def parse(text):
+            return eval(text)
+    - file: web/calc.js
+      code: |
+        const value = eval(text);
+  good:
+    - file: app/calc.py
+      code: |
+        import ast
+
+        def parse(text):
+            return ast.literal_eval(text)
+    - file: web/calc.js
+      code: |
+        const value = JSON.parse(text);
+detection:
+  - tool: ruff
+    ids: ['S102', 'S307']
+  - tool: kit
+    id: K-011
+    paths: ['*.js', '*.jsx', '*.ts', '*.tsx', '*.mjs', '*.cjs', '*.mts', '*.cts', '*.vue', '*.svelte']
+    pattern: '(?<![\w.$])eval\s*\(|\bnew\s+Function\s*\('
+  - tool: ai-review
+    categories: [code-injection]
+confidence: medium
+owner: monigairu
+last_reviewed: 2026-11-14

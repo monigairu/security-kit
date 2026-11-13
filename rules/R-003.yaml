@@ -1,0 +1,23 @@
+id: R-003
+name: 確認なしで何でも実行するモード（bypass）を使わない
+kind: own
+severity: block
+level: 1
+domain: config
+status: draft
+references:
+  - 要件定義書 11章 R-003
+message:
+  what: 確認なしで何でも実行するモード（bypass）を使おうとしている
+  why: ほかのすべての守りが効かなくなる
+  fix: 通常のモードか auto モードを使う
+examples:
+  bad: []
+  good: []
+  note: 設定と運用で守るルールのため、すり抜けテスト（NFR-07）で確かめる
+detection:
+  - tool: process
+    note: 強制設定ファイルで bypass を無効にする（FR-29、FR-72）
+confidence: high
+owner: monigairu
+last_reviewed: 2026-11-14
