@@ -1,0 +1,119 @@
+# キット自体の検査（基本設計書 6.4、10章）。PR とメインブランチへの push で動く。
+# - 外部の人の PR で書き込み権限や秘密情報を持って動く起動方法（pull_request_target）は使わない
+# - 権限は読み取りだけ。秘密情報は一切渡さない
+# - Action はコミット SHA で固定し、検査ツールは版とハッシュ（チェックサム）で固定する
+name: kit-ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: kit-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: テスト
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Ruff と gitleaks を入れる（版とハッシュを固定）
+        run: |
+          ci/install-python-tools.sh
+          ci/install-gitleaks.sh
+      - name: テストを動かす
+        run: python3 -m unittest discover -s tests -v
+
+  generated:
+    name: 生成物のずれの検査
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      UV_PYTHON_DOWNLOADS: never
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: uv を入れる（版とハッシュを固定）
+        run: ci/install-python-tools.sh
+      - name: 生成し直して差が出ないことを確かめる
+        run: uv run --locked build/build.py --check
+
+  plugin:
+    name: プラグインの書式の検査
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      DISABLE_AUTOUPDATER: "1"
+      CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # インストール時に動くスクリプトは無効にし（ci/claude/.npmrc）、本体の実行ファイルを直接動かす。
+      # 版と中身のチェックサムは ci/claude/package-lock.json で固定している
+      - name: Claude Code を入れる（版とチェックサムを固定）
+        working-directory: ci/claude
+        run: npm ci --ignore-scripts
+      - name: プラグインの書式を検査する
+        run: ci/claude/node_modules/@anthropic-ai/claude-code-linux-x64/claude plugin validate plugins/security-kit
+
+  secrets:
+    name: 秘密情報の検査
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    env:
+      EVENT_NAME: ${{ github.event_name }}
+      BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      BEFORE_SHA: ${{ github.event.before }}
+      AFTER_SHA: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: gitleaks を入れる（版とチェックサムを固定）
+        run: ci/install-gitleaks.sh
+      - name: 今回のコミットを検査する
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            range="${BASE_SHA}..${HEAD_SHA}"
+          elif [ "$BEFORE_SHA" != "0000000000000000000000000000000000000000" ]; then
+            range="${BEFORE_SHA}..${AFTER_SHA}"
+          else
+            range="${AFTER_SHA}"
+          fi
+          echo "検査する範囲: $range"
+          gitleaks git --no-banner --redact --verbose --log-opts="$range" .
+
+  workflows:
+    name: ワークフローの検査
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: zizmor を入れる（版とハッシュを固定）
+        run: ci/install-python-tools.sh
+      # 通信が要る検査は使わない（GitHub のトークンを渡さないため）
+      - name: ワークフローと更新の設定の危ない書き方を検査する
+        run: zizmor --offline --format plain .github/
