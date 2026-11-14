@@ -52,6 +52,8 @@ security-kit/
 │       └── data/rules.json  ルールデータ（build.py が生成）
 ├── rules/                   ルールの元データ（1ルール1ファイルの YAML。人が編集するのはここだけ）
 ├── build/                   ルールデータなどを生成するスクリプト
+├── ci/                      キット自体の CI で使う道具の固定（版とハッシュ）
+├── .github/                 キット自体の CI（ワークフロー）と、更新の設定
 ├── tests/                   テスト
 └── docs/                    文書（rules.csv はルールの一覧表。build.py が生成）
 ```
@@ -69,6 +71,12 @@ security-kit/
 ```bash
 python3 -m unittest discover -s tests -v
 ```
+
+## 開発の進め方
+
+変更は、ブランチを切って PR で受け付けます。`feat/名前`、`docs/名前`、`fix/名前` のようなブランチ名にします。PR を出すと、キット自体の CI（`.github/workflows/kit-ci.yml`）が、テスト、生成物のずれ、プラグインの書式、秘密情報、ワークフローの書き方を確かめます。CI が通ったら、squash マージします。
+
+GitHub の Free プランでは、非公開リポジトリにブランチ保護が使えないため、main への直接 push は設定では止められません。運用で守ります。詳しくは基本設計書の 6.7 にあります。
 
 ## ルールを変える
 
