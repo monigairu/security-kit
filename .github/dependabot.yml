@@ -1,0 +1,17 @@
+# Action とキットの CI の道具の更新の PR を自動で作る（基本設計書 6.4、FR-51）。
+# 公開から7日たったものだけを対象にする（乗っ取られた直後の版を取り込まないため）。
+# ci/requirements.txt（Python の道具）は、ハッシュつきで作り直す手順があるため、手で更新する。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+  - package-ecosystem: npm
+    directory: /ci/claude
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
