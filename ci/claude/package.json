@@ -4,6 +4,6 @@
   "private": true,
   "description": "キット自体の CI で、プラグインの書式を検査する（claude plugin validate）ための Claude Code。版は package-lock.json で固定する",
   "dependencies": {
-    "@anthropic-ai/claude-code": "2.1.311"
+    "@anthropic-ai/claude-code": "2.1.325"
   }
 }
